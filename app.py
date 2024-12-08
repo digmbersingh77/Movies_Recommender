@@ -1,65 +1,54 @@
-import streamlit as st
 import pickle
 import pandas as pd
+import streamlit as st
 import requests
-from dotenv import load_dotenv
+
 import os
 
-
 def fetch_poster(movie_name):
-    os.getenv(api_key)
-    url = f'https://omdbapi.com/?t={movie_name}&apikey={api_key}'
-    responce = requests.get(url)
-    data = responce.json()
+    url = "https://www.omdbapi.com/?t={}&apikey=694ac4b".format(movie_name)
+    data = requests.get(url)
+    data = data.json()
     return data['Poster']
+
+
 def recommend(movie):
     movie_index = movies[movies['title'] == movie].index[0]
-    distances = similarity[movie_index]
-    movies_list = sorted(list(enumerate(distances)),reverse=True, key= lambda x:x[1])[1:11]
-    recommended_movies = []
-    recommended_movies_poster = []
-    for i in movies_list:
-        title = movies.iloc[i[0]].title
-        recommended_movies_poster.append(fetch_poster(title))
-        recommended_movies.append(title)
-    return recommended_movies, recommended_movies_poster
+    distances = sorted(list(enumerate(similarity[movie_index])), reverse=True, key=lambda x: x[1])[1:6]
+    recommended_movie_name = []
+    recommended_movie_poster = []
+    for i in distances:
+        # fetch the movie poster
+        movie_title = movies.iloc[i[0]].title
+        recommended_movie_poster.append(fetch_poster(movie_title))
+        recommended_movie_name.append(movie_title)
 
-load_dotenv()
-similarity  = pickle.load(open('similarity.pkl','rb'))
+    return recommended_movie_name,recommended_movie_poster
+
+
+st.header('Movie Recommender System')
 movies_dict = pickle.load(open('movie_dict.pkl','rb'))
+similarity = pickle.load(open('similarity.pkl','rb'))
 movies = pd.DataFrame(movies_dict)
+movie_list = movies['title'].values
+selected_movie = st.selectbox("Type or select a movie from the dropdown",movie_list)
 
-st.title('Movie Recommender System')
-selected_movie_name = st.selectbox('How would you like', movies['title'].values)
-if st.button('Recommend'):
-   names, poster = recommend(selected_movie_name)
-   col1, col2, col3 = st.columns(3)
-   with col1:
-       st.header(names[0])
-       st.image(poster[0])
-   with col2:
-       st.header(names[1])
-       st.image(poster[1])
-   with col3:
-       st.header(names[2])
-       st.image(poster[2])
-   col4, col5, col6 = st.columns(3)
-   with col4:
-       st.header(names[3])
-       st.image(poster[3])
-   with col5:
-       st.header(names[4])
-       st.image(poster[4])
-   with col6:
-       st.header(names[5])
-       st.image(poster[5])
-   col7, col8, col9 = st.columns(3)
-   with col7:
-       st.header(names[6])
-       st.image(poster[6])
-   with col8:
-       st.header(names[7])
-       st.image(poster[7])
-   with col9:
-       st.header(names[8])
-       st.image(poster[8])
+if st.button('Show Recommendation'):
+    recommended_movie_names,recommended_movie_posters = recommend(selected_movie)
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        st.text(recommended_movie_names[0])
+        st.image(recommended_movie_posters[0])
+    with col2:
+        st.text(recommended_movie_names[1])
+        st.image(recommended_movie_posters[1])
+
+    with col3:
+        st.text(recommended_movie_names[2])
+        st.image(recommended_movie_posters[2])
+    with col4:
+        st.text(recommended_movie_names[3])
+        st.image(recommended_movie_posters[3])
+    with col5:
+        st.text(recommended_movie_names[4])
+        st.image(recommended_movie_posters[4])
